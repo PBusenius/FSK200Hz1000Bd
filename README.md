@@ -5,8 +5,8 @@
 + [Protocol](http://priyom.org/number-stations/digital/f06/protocol)
 
 
-##System overview
-![](data/overview.pdf)
+## System overview
+![](data/overview.png)
 
 
 
