@@ -6,7 +6,7 @@
 
 
 ##System overview
-![](https://github.com/PBusenius/FSK200Bd1000Hz/tree/master/data/overview.pdf)
+![](data/overview.pdf)
 
 
 
