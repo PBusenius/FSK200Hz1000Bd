@@ -11,6 +11,6 @@
 
 
 #### TODO
-+ CRC analyse
++ CRC analysis
 + raw binary mode detection
 + demodulation of microphone input 
