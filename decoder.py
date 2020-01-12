@@ -1,10 +1,11 @@
 import numpy as np
 
 from src.block import Block
-from src.block import DataBlock
+
 from src.block import MetadataBlock
 from src.ringbuffer import RingBuffer
 from src.frame_detection import FrameDetection
+from src.message import MessageModeA
 
 
 class CIS200decoder(object):
@@ -14,10 +15,10 @@ class CIS200decoder(object):
         self.__start_pattern = np.array([0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1,
                                          1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0])
         self.__start_pattern_inv = 1 - self.__start_pattern
+        self.__mode_a_start = np.array([])
+        self.__mode_b_start = np.array([])
         self.__block_length = 288
         self.__ring_buffer = RingBuffer(buffer_length=self.__block_length)
-        self.__mode_a_start = "11166"
-        self.__mode_b_start = "11100"
         self.__correlation_threshold_factor = 0.66
         self.__frame = FrameDetection(self.__start_pattern, self.__block_length, correlation_threshold=5)
         self.__messages = []
@@ -29,20 +30,21 @@ class CIS200decoder(object):
         self.__metadata_block = None
         self.__metadata_block_found = None
 
-    def format_text(self):
-        data_string = ""
-        data_block = DataBlock()
+        self.ecc_lut = {}
 
+    def format_text(self):
         print("\n\nDecode Messages:")
 
-        for block_index in range(1, len(self.__valid_block_dict) - 1):
-            if block_index in self.__valid_block_dict and block_index % 16 != 0:
-                data_string += data_block.decode("".join([str(i) for i in self.__valid_block_dict[block_index]]))
-            elif block_index % 16 == 0:
-                pass
-            else:
-                print("missing block {} -> stop processing".format(block_index))
-        print("message: ", data_string)
+        for message_id in range(self.__metadata_block.message_count):
+            try:
+                message = MessageModeA(self.__metadata_block, self.__valid_block_dict, message_id)
+                self.__messages.append(message)
+            except IndexError:
+                print("missing block -> ignore message {}".format(message_id + 1))
+
+        for mes in self.__messages:
+            print("message {}".format(mes.id))
+            print(mes.content + "\n")
 
     def decode(self, bit):
         self.__ring_buffer.add(bit)
@@ -66,15 +68,25 @@ class CIS200decoder(object):
         else:
             block = Block(data)
         if block.is_crc_ok:
-            if block.is_metadata_block:
-                if self.__metadata_block is None:
-                    self.__process_metadata_block(block)
+            # # # # # # # ecc lut # # # # # # #
+            if block.index in self.ecc_lut:
+                self.ecc_lut[block.index].append(block.index_ecc)
             else:
-                if self.__metadata_block_found:
-                    self.__process_message_block(block)
-                    if self.__blocks_received == self.__metadata_block.get_block_count() - 1:
-                        self.__processing_done = True
-                        self.format_text()
+                self.ecc_lut[block.index] = [block.index_ecc]
+            # # # # # # # # # # # # # # # # # #
+            try:
+                if block.is_index_ecc_correct:
+                    if block.is_metadata_block:
+                        if self.__metadata_block is None:
+                            self.__process_metadata_block(block)
+                    else:
+                        if self.__metadata_block_found:
+                            self.__process_message_block(block)
+                            if self.__blocks_received == self.__metadata_block.block_count - 1:
+                                self.__processing_done = True
+                                self.format_text()
+            except IndexError:
+                print("unknown block ecc: \n\tindex: {}\n\tecc: {}".format(block.index, block.index_ecc))
 
         return self.__processing_done
 
@@ -82,7 +94,7 @@ class CIS200decoder(object):
         self.__metadata_block = MetadataBlock(block)
         self.__metadata_block_found = True
 
-        self.__create_block_dict(self.__metadata_block.get_block_count())
+        self.__create_block_dict(self.__metadata_block.block_count)
 
         try:
             self.__valid_block_dict[block.index] = block.original_data
@@ -102,6 +114,9 @@ class CIS200decoder(object):
         for index in range(1, block_count):
             self.__valid_block_dict[index] = np.zeros(144, dtype=np.int)
 
+    def __mode_detection(self):
+        pass
+
 
 if __name__ == "__main__":
     import os
@@ -113,3 +128,9 @@ if __name__ == "__main__":
         all_blocks_found = test.decode(i)
         if all_blocks_found:
             break
+
+    """
+    for k, v in test.ecc_lut.items():
+        print(k, v)
+    """
+

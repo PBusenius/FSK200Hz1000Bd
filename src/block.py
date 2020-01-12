@@ -3,10 +3,23 @@ from src.crc import CRC
 from src.deinterleaver import Deinterleaver
 
 
+index_ecc_lut = [
+    [0, 0, 0, 0, 0], [1, 0, 0, 1, 1], [1, 0, 1, 0, 1], [0, 0, 1, 1, 0], [1, 1, 0, 0, 1], [0, 1, 0, 1, 0],
+    [0, 1, 1, 0, 0], [1, 1, 1, 1, 1], [1, 0, 1, 1, 0], [0, 0, 1, 0, 1], [0, 0, 0, 1, 1], [1, 0, 0, 0, 1],
+    [0, 1, 1, 1, 1], [1, 1, 1, 0, 0], [1, 1, 0, 1, 0], [0, 1, 0, 0, 1], [1, 1, 1, 1, 0], [0, 1, 1, 0, 1],
+    [0, 1, 0, 1, 1], [1, 1, 0, 0, 0], [0, 0, 1, 1, 1], [1, 0, 1, 0, 0], [1, 0, 0, 1, 0], [0, 0, 0, 0, 1],
+    [0, 1, 0, 0, 0], [1, 1, 0, 1, 1], [1, 1, 1, 0, 1], [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [0, 0, 0, 1, 0],
+    [0, 0, 1, 0, 0], [1, 0, 1, 1, 1], [1, 1, 0, 0, 0], [0, 1, 0, 1, 1], [0, 1, 1, 0, 1], [1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 1], [1, 0, 0, 1, 0], [1, 0, 1, 0, 0], [0, 0, 1, 1, 1], [0, 1, 1, 1, 0], [1, 1, 1, 0, 1],
+    [1, 1, 0, 1, 1], [0, 1, 0, 0, 0], [1, 0, 1, 1, 1], [0, 0, 1, 0, 0], [0, 0, 0, 1, 0], [1, 0, 0, 0, 1],
+    [0, 0, 1, 1, 0], [1, 0, 1, 0, 1], [1, 0, 0, 1, 1], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [0, 1, 1, 0, 1],
+]
+
+
 class BlockIndex:
     def __init__(self, data_in):
         self.__index = data_in[32:43].dot(2 ** np.arange(data_in[32:43].size)[::-1])
-        self.__index_ecc = data_in[43:47]
+        self.__index_ecc = data_in[43:48]
 
     @property
     def index(self):
@@ -15,6 +28,10 @@ class BlockIndex:
     @property
     def index_ecc(self):
         return self.__index_ecc
+
+    @property
+    def is_index_ecc_correct(self):
+        return np.array_equal(self.index_ecc, index_ecc_lut[self.index])
 
 
 class DataBlock(object):
@@ -40,25 +57,28 @@ class MetadataBlock(object):
         self._block_count = int(block_data[:11], 2)
         self._message_count = int(block_data[11:16], 2)
         self._start_message_one = int(block_data[16:27], 2)
-        self._start_message_two = int(block_data[27:38], 2)
-        self._start_message_three = int(block_data[38:49], 2)
-        self._start_message_four = int(block_data[49:60], 2)
-        self._start_message_five = int(block_data[60:71], 2)
-        self._start_message_six = int(block_data[71:82], 2)
-        self._start_message_seven = int(block_data[82:93], 2)
+        self._start_message_two = int(block_data[32:43], 2)
+        self._start_message_three = int(block_data[48:59], 2)
+        self._start_message_four = int(block_data[64:75], 2)
+        self._start_message_five = int(block_data[80:91], 2)
+        self._start_message_six = int(block_data[96:107], 2)
+        self._start_message_seven = int(block_data[112:123], 2)
 
         print("metadata block with index ", block.index)
-        print("block count: ", self.get_block_count())
-        print("message count: ", self.get_message_count())
-        print("message start at block:", self.get_message_start_blocks())
+        print("block count: ", self.block_count)
+        print("message count: ", self.message_count)
+        print("message start at block:", self.message_start_blocks)
 
-    def get_block_count(self):
+    @property
+    def block_count(self):
         return self._block_count
 
-    def get_message_count(self):
+    @property
+    def message_count(self):
         return self._message_count
 
-    def get_message_start_blocks(self):
+    @property
+    def message_start_blocks(self):
         return [self._start_message_one, self._start_message_two, self._start_message_three, self._start_message_four,
                 self._start_message_five, self._start_message_six, self._start_message_seven]
 
