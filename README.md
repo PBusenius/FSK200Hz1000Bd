@@ -1,5 +1,7 @@
 # FSK200Hz1000Bd
 
++ [Analysis](https://drive.google.com/open?id=13yC7ma67Ixcz-zXy54VZwTlTGKLky6k3)
+
 + [Overview](http://priyom.org/number-stations/digital/f06)
 
 + [Protocol](http://priyom.org/number-stations/digital/f06/protocol)
