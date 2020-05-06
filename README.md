@@ -12,5 +12,8 @@
 
 #### TODO
 + ~~CRC analysis~~
++ improve frame detection performace
++ improve ringbuffer performance
++ remove crcmod dependency
 + raw binary mode detection
 + demodulation of microphone input
