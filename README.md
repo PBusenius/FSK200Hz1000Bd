@@ -5,8 +5,6 @@
 + [Protocol](http://priyom.org/number-stations/digital/f06/protocol)
 
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://drive.google.com/open?id=13yC7ma67Ixcz-zXy54VZwTlTGKLky6k3)
-
 
 ### TODO
 + ~~CRC analysis~~
