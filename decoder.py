@@ -19,8 +19,7 @@ class CIS200decoder(object):
         self.__mode_b_start = np.array([])
         self.__block_length = 288
         self.__ring_buffer = RingBuffer(buffer_length=self.__block_length)
-        self.__correlation_threshold_factor = 0.66
-        self.__frame = FrameDetection(self.__start_pattern, self.__block_length, correlation_threshold=5)
+        self.__frame = FrameDetection(self.__start_pattern, self.__block_length, confidence=0.8)
         self.__messages = []
         self.__valid_block_dict = {}
         self.__data = None
@@ -121,8 +120,8 @@ class CIS200decoder(object):
 if __name__ == "__main__":
     import os
 
-    with open(os.path.join("test", "content.id.1.1.txt"), "r") as f:
-        data_in = np.array([int(x) for x in f.read()])
+    with open(os.path.join("test", "data.txt"), "r") as f:
+        data_in = np.array([int(x) for x in f.read().strip()])
     test = CIS200decoder()
     for i in data_in:
         all_blocks_found = test.decode(i)
