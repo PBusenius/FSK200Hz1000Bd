@@ -6,7 +6,7 @@ class FrameDetection(object):
         self.__pattern = pattern
         self.__pattern_inverted = 1 - self.__pattern
         self.__frame_length = frame_length
-        self.__correlation_threshold_value = self.__compute_threshold_value(confidence)
+        self.__correlation_threshold_value = confidence
         self.__inverted_pattern_found = False
         self.__frame_found = False
 
@@ -20,24 +20,17 @@ class FrameDetection(object):
 
     @staticmethod
     def __correlate(data, pattern):
-        return np.correlate(
-            data - data.mean(),
-            pattern - pattern.mean(),
-            mode="valid"
-        )
-
-    def __compute_threshold_value(self, confidence):
-        return max(self.__correlate(self.__pattern, self.__pattern)) * confidence
+        return np.corrcoef(pattern, data[:len(pattern)])[0][1]
 
     def perform_detection(self, data):
         if data.size == 288:
             self.__frame_found = False
             self.__inverted_pattern_found = False
             pattern_correlation = self.__correlate(data, self.__pattern)
-            pattern_correlation_inv = 1 - self.__pattern
+            pattern_correlation_inv = 1 - pattern_correlation
 
-            if pattern_correlation[0] >= self.__correlation_threshold_value:
+            if pattern_correlation >= self.__correlation_threshold_value:
                 self.__frame_found = True
-            elif pattern_correlation_inv[0] >= self.__correlation_threshold_value:
+            elif pattern_correlation_inv >= self.__correlation_threshold_value:
                 self.__frame_found = True
                 self.__inverted_pattern_found = True
