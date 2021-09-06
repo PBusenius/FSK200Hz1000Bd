@@ -10,6 +10,7 @@ class CRC:
 
     @property
     def is_crc_ok(self):
+        # TODO: implement crc and remove crcmod dependency
         data = np.packbits(np.reshape(self.__raw, (-1, 8))).tobytes()
         crc = np.packbits(np.reshape(self.__ecc, (-1, 8))).tobytes()
 
