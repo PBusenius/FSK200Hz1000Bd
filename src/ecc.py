@@ -19,4 +19,4 @@ class ECC:
 
     @staticmethod
     def check(index, index_ecc):
-        return np.array_equal(index, index_ecc_lut[index_ecc])
+        return np.array_equal(index_ecc, index_ecc_lut[index])
